@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { encryptPayload } from "@/lib/crypto";
+import { Button } from "@/components/ui/button";
+
+import Image from "next/image";
+
 
 export default function RegisterPage() {
   const [username, setUsername] = useState("");
@@ -40,16 +44,18 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">
-          Register
+    <div className="min-h-screen flex items-center justify-center ">
+      <div className=" p-8 rounded-md border w-full max-w-md">
+        <h1 className="text-2xl font-bold mb-6 text-center ">
+          <div className="relative  h-6 w-8 aspect-square">
+            <Image src={'/logo.png'} alt="" fill />
+          </div>
         </h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label
               htmlFor="username"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium"
             >
               Username
             </label>
@@ -58,14 +64,14 @@ export default function RegisterPage() {
               id="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+              className="mt-1 block w-full px-3 py-2 border outline-none rounded-md focus:border-[#2ea652] h-12"
               required
             />
           </div>
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium"
             >
               Email
             </label>
@@ -74,14 +80,14 @@ export default function RegisterPage() {
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+              className="mt-1 block w-full px-3 py-2 border outline-none rounded-md focus:border-[#2ea652] h-12"
               required
             />
           </div>
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium"
             >
               Password
             </label>
@@ -90,22 +96,23 @@ export default function RegisterPage() {
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+              className="mt-1 block w-full px-3 py-2 border outline-none rounded-md focus:border-[#2ea652] h-12"
               required
             />
           </div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
-          <button
+          <Button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-gray-950 text-white py-2 px-4 rounded-md hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="h-12 w-full cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            variant={'outline'}
           >
             {isLoading ? "Creating account..." : "Register"}
-          </button>
+          </Button>
         </form>
-        <p className="mt-4 text-center text-sm text-gray-600">
+        <p className="mt-4 text-center text-sm">
           Already have an account?{" "}
-          <a href="/login" className="text-blue-600 hover:underline">
+          <a href="/login" className="font-bold text-[#2ea652] hover:underline">
             Login
           </a>
         </p>
