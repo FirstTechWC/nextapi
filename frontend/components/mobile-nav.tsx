@@ -69,8 +69,8 @@ export function MobileNav() {
 									>
 										{link.label}
 									</a>
-								))} */}
-							</div>
+								))} 
+							</div>*/}
 							<div className="mt-12 flex flex-col gap-2">
 								<Button className="w-full" variant="outline">
 									Sign In
@@ -78,8 +78,7 @@ export function MobileNav() {
 								<Button className="w-full">Get Started</Button>
 							</div>
 						</div>
-					</div>,
-					document.body
+					</div>
 				)}
 		</>
 	);
