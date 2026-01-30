@@ -47,7 +47,6 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-# Add rate limiter to app state
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
@@ -78,10 +77,11 @@ def get_password_hash(password: str) -> str:
 async def register(request: EncryptedRequest, db: Session = Depends(get_db)):
     """Register a new user account."""
     try:
-        data = decrypt_payload(request.encrypted)
-        username = data["username"]
-        email = data["email"]
-        password = data["password"]
+        data        = decrypt_payload(request.encrypted)
+        username    = data["username"]
+        email       = data["email"]
+        password    = data["password"]
+        role        = data.get("role", "guest")
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -111,18 +111,19 @@ async def register(request: EncryptedRequest, db: Session = Depends(get_db)):
 
         hashed_password = get_password_hash(password)
         user_data = {
-            "username": username,
-            "email": email,
-            "hashed_password": hashed_password,
+            "username"          : username,
+            "email"             : email,
+            "role"              : role,
+            "hashed_password"   : hashed_password,
         }
         created_user = await UserCollection.create(mongo_db, user_data)
         return UserResponse(
             id=str(created_user["_id"]),
-            username=created_user["username"],
-            email=created_user["email"],
+            username    =created_user["username"],
+            email       =created_user["email"],
+            role        =created_user["role"],
         )
 
-    # SQLite path
     db_user = db.query(User).filter(User.username == username).first()
     if db_user:
         raise HTTPException(
@@ -138,10 +139,12 @@ async def register(request: EncryptedRequest, db: Session = Depends(get_db)):
         )
 
     hashed_password = get_password_hash(password)
+    print(role)
     db_user = User(
-        username=username,
-        email=email,
-        hashed_password=hashed_password,
+        username        =username,
+        email           =email,
+        role            =role,
+        hashed_password =hashed_password,
     )
     db.add(db_user)
     db.commit()
@@ -151,6 +154,7 @@ async def register(request: EncryptedRequest, db: Session = Depends(get_db)):
         id=str(db_user.id),
         username=db_user.username,
         email=db_user.email,
+        role=db_user.role,
     )
 
 
@@ -185,9 +189,10 @@ async def login(request: EncryptedRequest, db: Session = Depends(get_db)):
         # Create JWT token
         access_token = create_access_token(
             data={
-                "user_id": str(db_user["_id"]),
-                "username": db_user["username"],
-                "token_type": "user",
+                "user_id"       : str(db_user["_id"]),
+                "username"      : db_user["username"],
+                "role"          : db_user["role"],
+                "token_type"    : "user",
             },
             expires_delta=timedelta(minutes=JWT_ACCESS_TOKEN_EXPIRE_MINUTES),
         )
@@ -200,10 +205,11 @@ async def login(request: EncryptedRequest, db: Session = Depends(get_db)):
                 id=str(db_user["_id"]),
                 username=db_user["username"],
                 email=db_user["email"],
+                role=db_user["role"]
             ),
         )
 
-    # SQLite path
+
     db_user = db.query(User).filter(User.username == username).first()
 
     if not db_user or not verify_password(password, db_user.hashed_password):
@@ -212,17 +218,19 @@ async def login(request: EncryptedRequest, db: Session = Depends(get_db)):
             detail="Invalid username or password",
         )
 
-    # Create JWT token
+
     access_token = create_access_token(
         data={
             "user_id": str(db_user.id),
             "username": db_user.username,
+            "role": db_user.role,
             "token_type": "user",
         },
         expires_delta=timedelta(minutes=JWT_ACCESS_TOKEN_EXPIRE_MINUTES),
     )
 
     return LoginResponse(
+         
         access_token=access_token,
         token_type="bearer",
         expires_in=JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
@@ -230,6 +238,7 @@ async def login(request: EncryptedRequest, db: Session = Depends(get_db)):
             id=str(db_user.id),
             username=db_user.username,
             email=db_user.email,
+            role=db_user.role
         ),
     )
 
@@ -286,6 +295,7 @@ async def get_user_details(
                 id=str(user["_id"]),
                 username=user["username"],
                 email=user["email"],
+                role=user["role"],
                 auth_type="user",
             )
         else:
@@ -299,6 +309,7 @@ async def get_user_details(
                 id=str(user.id),
                 username=user.username,
                 email=user.email,
+                role=user.role,
                 auth_type="user",
             )
     else:
@@ -335,11 +346,11 @@ async def create_api_client(
     if DATABASE_TYPE == "mongo":
         mongo_db = get_database()
         client_doc = {
-            "name"          : client_data.name,
-            "client_id"     : client_id,
-            "hashed_secret" : hashed_secret,
-            "created_by"    : current_user.user_id,
-            "is_active"     : True,
+            "name"              : client_data.name,
+            "client_id"         : client_id,
+            "hashed_secret"     : hashed_secret,
+            "created_by"        : current_user.user_id,
+            "is_active"         : True,
             "created_at"        : datetime.now(timezone.utc),
         }
         created_client = await APIClientCollection.create(mongo_db, client_doc)
@@ -399,7 +410,6 @@ async def list_api_clients(
             ]
         )
 
-    # SQLite path
     clients = db.query(APIClient).filter(
         APIClient.created_by == int(current_user.user_id)
     ).all()

@@ -10,6 +10,7 @@ class UserCreate(BaseModel):
     username    : str
     email       : EmailStr
     password    : str
+    role        : str
 
 class UserLogin(BaseModel):
     username    : str
@@ -19,6 +20,7 @@ class UserResponse(BaseModel):
     id          : str
     username    : str
     email       : str
+    role        : str
 
     class Config:
         from_attributes = True
@@ -65,5 +67,6 @@ class UserDetailsResponse(BaseModel):
     id: str
     username: str
     email: str
-    auth_type: str 
+    role: Optional[str] = None
+    auth_type: str
     client_name: Optional[str] = None  

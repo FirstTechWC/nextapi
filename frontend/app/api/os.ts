@@ -37,12 +37,13 @@ export const GetUserInfo = async (accessToken?: string): Promise<USER_DETAILS> =
         })
         if(!response.ok){
             console.log(`Failed to fetch user details: ${response.statusText}`)
-            return {id: "", username: "no user information", email: "", auth_type: ""}
+            return {id: "", username: "no user information", email: "", role: "", auth_type: ""}
         }
         const data = await response.json()
+        console.log(data)
         return data
     }catch{
         console.log("Error: Not Able to fetch user details")
-        return {id: "", username: "no user information", email: "", auth_type: ""}
+        return {id: "", username: "no user information", email: "", role: "", auth_type: ""}
     }
 }

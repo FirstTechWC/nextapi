@@ -11,6 +11,14 @@ A production-ready full-stack boilerplate featuring **Next.js 16** frontend and 
   - Encrypted credential transmission (AES-256-CBC)
   - Password hashing with bcrypt
 
+- **Role-Based Access Control (RBAC)**
+  - Three user roles: `admin`, `user`, `guest`
+  - Role embedded in JWT tokens for stateless authorization
+  - Centralized route configuration with role requirements
+  - Client-side route guards with automatic redirects
+  - Conditional UI rendering based on user role
+  - Default role assignment on registration (`guest`)
+
 - **Dual Database Support**
   - SQLite (default) - zero configuration required
   - MongoDB - optional, async with Motor driver
@@ -52,10 +60,15 @@ nextapi/
 │   └── pyproject.toml      # Python dependencies
 ├── frontend/               # Next.js frontend
 │   ├── app/               # App router pages
-│   │   ├── page.tsx       # Dashboard (protected)
+│   │   ├── page.tsx       # Landing page
+│   │   ├── home/          # Dashboard (protected)
+│   │   ├── admin/         # Admin panel (admin only)
+│   │   ├── guest/         # Guest page (guest, admin)
 │   │   ├── login/         # Login page
 │   │   ├── register/      # Registration page
 │   │   └── api/           # API routes & NextAuth
+│   ├── config/            # Configuration
+│   │   └── routes.ts      # RBAC route definitions
 │   ├── lib/               # Utilities
 │   │   ├── crypto.ts      # Client-side encryption
 │   │   └── crypto-server.ts # Server-side encryption
@@ -296,9 +309,57 @@ uv run uvicorn main:app           # Production server
 - PyCryptodome (AES encryption)
 - slowapi (rate limiting)
 
-### TO DO
+## Role-Based Access Control
 
-- Implement base RBAC
+### User Roles
+
+| Role | Description |
+|------|-------------|
+| `admin` | Full access to all routes and features |
+| `user` | Standard authenticated user access |
+| `guest` | Limited access (default role for new users) |
+
+### Protected Routes
+
+| Route | Allowed Roles | Description |
+|-------|---------------|-------------|
+| `/home` | admin, user, guest | Main dashboard |
+| `/admin` | admin | Admin panel |
+| `/guest` | admin, guest | Guest-specific page |
+
+### How RBAC Works
+
+1. **Registration**: New users are assigned the `guest` role by default
+2. **Authentication**: User role is embedded in the JWT token
+3. **Route Protection**: Frontend checks user role before rendering protected pages
+4. **Unauthorized Access**: Users are redirected to dashboard if they lack permissions
+
+### Configuration
+
+Routes and role requirements are defined in `frontend/config/routes.ts`:
+
+```typescript
+export const ProtectedRoutes: ProtectedRoute[] = [
+  { path: '/home', label: 'Dashboard', allowedRoles: ['admin', 'guest', 'user'] },
+  { path: '/admin', label: 'Admin Panel', allowedRoles: ['admin'] },
+  { path: '/guest', label: 'Guest Page', allowedRoles: ['guest', 'admin'] },
+];
+```
+
+### Helper Functions
+
+```typescript
+import { hasAccess, getAccessibleRoutes, canAccessPath } from '@/config/routes';
+
+// Check if user has a specific role
+hasAccess('user', ['admin', 'user']); // true
+
+// Get all routes accessible to a user
+getAccessibleRoutes('guest'); // Returns routes for guest role
+
+// Check if user can access a specific path
+canAccessPath('admin', '/admin'); // true
+```
 
 ## License
 
@@ -308,6 +369,6 @@ MIT
 
 For questions or feedback, please contact:
 
-    Name:   Mohammed K.
+    Name:   Mohammed Khan.
     Email:  mkhan@live.co.za
     GitHub: sup3rus3r

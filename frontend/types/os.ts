@@ -8,6 +8,6 @@ export interface USER_DETAILS {
     id: string;
     username: string;
     email: string;
+    role: string;
     auth_type: string;
-    client_name?: string;
 }

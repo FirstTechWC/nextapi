@@ -32,11 +32,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
 
           const data = await res.json();
-          // Response now includes: { access_token, token_type, expires_in, user: { id, username, email } }
           return {
             id: data.user.id.toString(),
             name: data.user.username,
             email: data.user.email,
+            role: data.user.role,
             accessToken: data.access_token,
           };
         } catch (error) {
@@ -53,6 +53,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.role = user.role;
         token.accessToken = user.accessToken;
       }
       return token;
@@ -60,6 +61,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
+        session.user.role = token.role as string;
       }
       session.accessToken = token.accessToken as string;
       return session;

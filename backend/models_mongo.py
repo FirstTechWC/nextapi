@@ -24,6 +24,7 @@ class UserMongo(BaseModel):
     id: Optional[PyObjectId] = Field(default=None, alias="_id")
     username: str
     email: str
+    role: str
     hashed_password: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
