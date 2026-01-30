@@ -296,9 +296,13 @@ uv run uvicorn main:app           # Production server
 - PyCryptodome (AES encryption)
 - slowapi (rate limiting)
 
+### TO DO
+
+- Implement base RBAC
+
 ## License
 
-ISC
+MIT
 
 ## Contact
 
