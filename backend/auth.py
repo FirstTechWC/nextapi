@@ -24,6 +24,7 @@ JWT_ACCESS_TOKEN_EXPIRE_MINUTES     = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MIN
 class TokenData(BaseModel):
     user_id         : str
     username        : str
+    role            : str
     token_type      : str = "user"
 
 
@@ -111,6 +112,7 @@ async def get_current_user(
     return TokenData(
         user_id=payload.get("user_id"),
         username=payload.get("username"),
+        role=payload.get("role", "guest"),
         token_type="user",
     )
 
@@ -144,7 +146,7 @@ async def get_api_client(
             detail="Invalid API credentials",
         )
 
-    # Get hashed secret based on database type
+
     if DATABASE_TYPE == "mongo":
         hashed_secret = client.get("hashed_secret")
         client_name = client.get("name")
@@ -186,14 +188,12 @@ async def get_current_user_or_api_client(
     Dependency that accepts either JWT token (for logged-in users)
     or API key/secret (for external clients).
     """
-    # Try JWT authentication first
     if credentials:
         try:
             return await get_current_user(credentials)
         except HTTPException:
             pass
 
-    # Try API key authentication
     if api_key and api_secret:
         try:
             return await get_api_client(request, api_key, api_secret, db)

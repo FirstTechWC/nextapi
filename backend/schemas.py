@@ -69,4 +69,12 @@ class UserDetailsResponse(BaseModel):
     email: str
     role: Optional[str] = None
     auth_type: str
-    client_name: Optional[str] = None  
+    client_name: Optional[str] = None
+
+
+class ToggleRoleResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+    user: UserResponse
+    message: str

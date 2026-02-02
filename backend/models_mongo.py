@@ -66,6 +66,16 @@ class UserCollection:
         collection = db[cls.collection_name]
         return await collection.find_one({"_id": ObjectId(user_id)})
 
+    @classmethod
+    async def update_role(cls, db, user_id: str, new_role: str) -> Optional[dict]:
+        collection = db[cls.collection_name]
+        result = await collection.find_one_and_update(
+            {"_id": ObjectId(user_id)},
+            {"$set": {"role": new_role}},
+            return_document=True
+        )
+        return result
+
 
 class APIClientMongo(BaseModel):
     """API client model for MongoDB."""

@@ -17,7 +17,7 @@ from models import User, APIClient
 from schemas import (
     EncryptedRequest, UserResponse, LoginResponse,
     APIClientCreate, APIClientResponse, APIClientCreateResponse,
-    APIClientListResponse, UserDetailsResponse
+    APIClientListResponse, UserDetailsResponse, ToggleRoleResponse
 )
 from crypto_utils import decrypt_payload
 from auth import (
@@ -316,10 +316,95 @@ async def get_user_details(
         return UserDetailsResponse(
             id=auth.client_id,
             username=auth.client_name,
-            email="", 
+            email="",
             auth_type="api_client",
             client_name=auth.client_name,
         )
+
+
+@app.put("/user/toggle-role", response_model=ToggleRoleResponse)
+@limiter.limit("10/minute")
+async def toggle_role(
+    request: Request,
+    current_user: TokenData = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Toggle the current user's role between 'admin' and 'guest'.
+    Returns a new JWT token with the updated role.
+
+    Requires JWT authentication.
+    """
+    new_role = "guest" if current_user.role == "admin" else "admin"
+
+    if DATABASE_TYPE == "mongo":
+        mongo_db = get_database()
+        updated_user = await UserCollection.update_role(mongo_db, current_user.user_id, new_role)
+
+        if not updated_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
+
+        access_token = create_access_token(
+            data={
+                "user_id": str(updated_user["_id"]),
+                "username": updated_user["username"],
+                "role": new_role,
+                "token_type": "user",
+            },
+            expires_delta=timedelta(minutes=JWT_ACCESS_TOKEN_EXPIRE_MINUTES),
+        )
+
+        return ToggleRoleResponse(
+            access_token=access_token,
+            token_type="bearer",
+            expires_in=JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            user=UserResponse(
+                id=str(updated_user["_id"]),
+                username=updated_user["username"],
+                email=updated_user["email"],
+                role=new_role,
+            ),
+            message=f"Role changed from '{current_user.role}' to '{new_role}'",
+        )
+
+    # SQLite path
+    db_user = db.query(User).filter(User.id == int(current_user.user_id)).first()
+
+    if not db_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    db_user.role = new_role
+    db.commit()
+    db.refresh(db_user)
+
+    access_token = create_access_token(
+        data={
+            "user_id": str(db_user.id),
+            "username": db_user.username,
+            "role": new_role,
+            "token_type": "user",
+        },
+        expires_delta=timedelta(minutes=JWT_ACCESS_TOKEN_EXPIRE_MINUTES),
+    )
+
+    return ToggleRoleResponse(
+        access_token=access_token,
+        token_type="bearer",
+        expires_in=JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        user=UserResponse(
+            id=str(db_user.id),
+            username=db_user.username,
+            email=db_user.email,
+            role=new_role,
+        ),
+        message=f"Role changed from '{current_user.role}' to '{new_role}'",
+    )
 
 
 # ============================================================================

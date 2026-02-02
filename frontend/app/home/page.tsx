@@ -2,7 +2,7 @@
 import { useEffect, useLayoutEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { GetAPIStatus, GetUserInfo } from "../api/os";
+import { GetAPIStatus, GetUserInfo, ToggleUserRole } from "../api/os";
 import { API_HEALTH, USER_DETAILS } from "@/types/os";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -10,7 +10,7 @@ import { Routes, ProtectedRoutes, hasAccess } from "@/config/routes";
 
 
 export default function Home() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
   const [server_status, set_server_status]      = useState<API_HEALTH>({status: "checking..." })
   const [user_info    , set_user_info]          = useState<USER_DETAILS>({id: "", username :"guest", email: "", role: "", auth_type: ""})
@@ -108,6 +108,23 @@ export default function Home() {
               );
             })}
           </div>
+          <Button
+            onClick={async () => {
+              const result = await ToggleUserRole(session?.accessToken);
+              if (result) {
+                await update({
+                  role: result.user.role,
+                  accessToken: result.access_token,
+                });
+                window.alert(result.message);
+              } else {
+                window.alert('Failed to toggle role');
+              }
+            }}
+            variant={'outline'} className="cursor-pointer text-secondary font-semibold px-12 rounded-sm"
+          >
+            Toggle Role (Current: {userRole})
+          </Button>
           <Button
             onClick={() => signOut({ callbackUrl: "/login" })}
             variant={'outline'} className="cursor-pointer text-primary font-semibold px-12 rounded-sm"
