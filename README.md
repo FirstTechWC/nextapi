@@ -360,6 +360,8 @@ getAccessibleRoutes('guest'); // Returns routes for guest role
 // Check if user can access a specific path
 canAccessPath('admin', '/admin'); // true
 ```
+## To Do
+ - make the template PWA ready.
 
 ## License
 
