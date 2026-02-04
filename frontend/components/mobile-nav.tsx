@@ -78,7 +78,8 @@ export function MobileNav() {
 								<Button className="w-full">Get Started</Button>
 							</div>
 						</div>
-					</div>
+					</div>,
+					document.body
 				)}
 		</>
 	);
